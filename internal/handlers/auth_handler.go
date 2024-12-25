@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,6 +23,8 @@ type UserSerializer struct {
 	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+var store = session.New()
 
 func CreateResponseUser(userModel models.User) UserSerializer {
 	return UserSerializer{ID: userModel.ID, Name: userModel.Name, Email: userModel.Email, Number: userModel.Number, Role: userModel.Role, Location: userModel.Location, CreatedAt: userModel.CreatedAt}
@@ -52,6 +55,7 @@ func RegisterHandler(c *fiber.Ctx) error {
 	}
 
 	user.Password = string(hashedPassword)
+	user.CreatedAt = time.Now()
 
 	// To save the user to the DB
 	_, err = config.DB.Exec(
@@ -72,18 +76,21 @@ func RegisterHandler(c *fiber.Ctx) error {
 }
 
 func LoginHandler(c *fiber.Ctx) error {
-	// To Parse the request body
+	// To retrieve email and password from the request body
+
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
+	// To Parse the incoming request body
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid inputs, please enter a valid data"})
 	}
 
 	// To fetch user from the DB
 	var user models.User
+
 	err := config.DB.QueryRow(
 		c.Context(),
 		"SELECT id, name, email, password, location FROM users WHERE email=$1",
@@ -99,6 +106,22 @@ func LoginHandler(c *fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
 	}
 
+	// To create a new session
+	session, err := store.Get(c)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	// To store the user data in the session
+	session.Set("user", user.Email)
+	// To save the session
+	if err := session.Save(); err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
 	responseUser := CreateResponseUser(user)
 
 	// Response
@@ -106,5 +129,25 @@ func LoginHandler(c *fiber.Ctx) error {
 		"message": "Login successful",
 		"data":    responseUser,
 	})
+}
 
+func LogoutHandler(c *fiber.Ctx) error {
+	// To retrieve the session
+	session, err := store.Get(c)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	// To destroy the session
+	if err := session.Destroy(); err != nil {
+		c.Status(500).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Successfully logged out",
+	})
 }

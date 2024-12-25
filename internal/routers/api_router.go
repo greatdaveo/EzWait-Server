@@ -16,7 +16,8 @@ func SetupRoutes(app *fiber.App) {
 
 	// To Register
 	api.Post("/user/register", middleware.ValidateUser, handlers.RegisterHandler)
-
 	// Login User
 	api.Post("/user/login", handlers.LoginHandler)
+	// Logout user
+	api.Post("/user/logout", handlers.LogoutHandler)
 }
