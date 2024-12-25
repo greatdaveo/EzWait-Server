@@ -11,7 +11,7 @@ type User struct {
 	ID              uint      `json:"id"`
 	Name            string    `json:"name"`
 	Email           string    `json:"email"`
-	Number          int       `json:"number"`
+	Number          string    `json:"number"`
 	Role            string    `json:"role"`
 	Password        string    `json:"password"`
 	ConfirmPassword string    `json:"confirm_password"`

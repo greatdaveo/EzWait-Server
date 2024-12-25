@@ -2,6 +2,7 @@ package main
 
 import (
 	"ezwait/config"
+	"ezwait/internal/routers"
 	"log"
 	"os"
 
@@ -15,9 +16,14 @@ func main() {
 
 	// To initialize the Fiber app
 	app := fiber.New()
+
 	// To set up routes
-	// routers.SetupRoutes(app)
+	routers.SetupRoutes(app)
+
 	// To start the server
 	port := os.Getenv("APP_PORT")
+	if port == "" {
+		port = "3000"
+	}
 	log.Fatal(app.Listen(":" + port))
 }

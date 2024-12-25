@@ -10,9 +10,13 @@ import (
 func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api/v1")
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Welcome to EzWait App")
+	})
+
 	// To Register
-	api.Post("/register", middleware.ValidateUser, handlers.RegisterHandler)
+	api.Post("/user/register", middleware.ValidateUser, handlers.RegisterHandler)
 
 	// Login User
-	api.Post("/login", handlers.LoginHandler)
+	api.Post("/user/login", handlers.LoginHandler)
 }

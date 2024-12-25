@@ -26,7 +26,7 @@ func ConnectDB() {
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"))
-		
+
 	// To connect to PostgreSQL
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
