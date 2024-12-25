@@ -14,10 +14,15 @@ func SetupRoutes(app *fiber.App) {
 		return c.SendString("Welcome to EzWait App")
 	})
 
-	// To Register
+	// For Authentication
 	api.Post("/user/register", middleware.ValidateUser, handlers.RegisterHandler)
-	// Login User
 	api.Post("/user/login", handlers.LoginHandler)
-	// Logout user
 	api.Post("/user/logout", handlers.LogoutHandler)
+
+	// For Bookings
+	api.Post("/customer/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.MakeBooking)
+	api.Put("/bookings/:id", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
+	api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.ViewALlBookings)
+	app.Patch("/bookings/:id/status", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateBookingStatus)
+	app.Patch("/stylists/:id/customers", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateCurrentCustomers)
 }

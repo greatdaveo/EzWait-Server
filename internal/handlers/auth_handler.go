@@ -113,8 +113,11 @@ func LoginHandler(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
+
 	// To store the user data in the session
 	session.Set("user", user.Email)
+	// session.Set("role", user.Role)
+
 	// To save the session
 	if err := session.Save(); err != nil {
 		return c.Status(500).JSON(fiber.Map{
