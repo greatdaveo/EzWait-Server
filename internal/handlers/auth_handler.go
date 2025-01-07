@@ -3,8 +3,8 @@ package handlers
 import (
 	"ezwait/config"
 	"ezwait/internal/models"
+	"ezwait/internal/utils"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,11 +58,11 @@ func RegisterHandler(c *fiber.Ctx) error {
 	user.CreatedAt = time.Now()
 
 	// To save the user to the DB
-	_, err = config.DB.Exec(
+	err = config.DB.QueryRow(
 		c.Context(),
-		"INSERT INTO users (name, email, role, number, password, location, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())",
-		user.Name, strings.ToLower(user.Email), user.Role, user.Number, user.Password, user.Location,
-	)
+		"INSERT INTO users (name, email, password, number, role, location, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id, created_at",
+		user.Name, user.Email, user.Password, user.Number, user.Role, user.Location,
+	).Scan(&user.ID, &user.CreatedAt)
 
 	if err != nil {
 		log.Println("Error saving user:", err)
@@ -77,14 +77,15 @@ func RegisterHandler(c *fiber.Ctx) error {
 
 func LoginHandler(c *fiber.Ctx) error {
 	// To retrieve email and password from the request body
-
-	var input struct {
+	type LoginRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
+	var loginReq LoginRequest
+
 	// To Parse the incoming request body
-	if err := c.BodyParser(&input); err != nil {
+	if err := c.BodyParser(&loginReq); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid inputs, please enter a valid data"})
 	}
 
@@ -93,35 +94,24 @@ func LoginHandler(c *fiber.Ctx) error {
 
 	err := config.DB.QueryRow(
 		c.Context(),
-		"SELECT id, name, email, password, location FROM users WHERE email=$1",
-		input.Email,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Location)
+		"SELECT id, name, email, password, number, role, location FROM users WHERE email=$1",
+		loginReq.Email,
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Number, &user.Role, &user.Location)
 
 	if err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
 	}
 
 	// To compare the hashed password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password)); err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
 	}
 
-	// To create a new session
-	session, err := store.Get(c)
+	// To generate JWT
+	token, err := utils.GenerateToken(&user)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// To store the user data in the session
-	session.Set("user", user.Email)
-	// session.Set("role", user.Role)
-
-	// To save the session
-	if err := session.Save(); err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "Failed to generate token",
 		})
 	}
 
@@ -130,6 +120,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	// Response
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Login successful",
+		"token":   token,
 		"data":    responseUser,
 	})
 }

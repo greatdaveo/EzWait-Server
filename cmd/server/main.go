@@ -2,17 +2,25 @@ package main
 
 import (
 	"ezwait/config"
-	"ezwait/internal/middleware"
 	"ezwait/internal/routers"
 	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
 // To initialize session store
-var store = session.New()
+var store = session.New(session.Config{
+	KeyLookup:      "cookie:session_id",
+	CookieSecure:   false,
+	CookieHTTPOnly: true,
+	// source:         "cookie",
+	// sessionName:    "session_id",
+
+	// Expiration:     24 * time.Hour,
+})
 
 func main() {
 	// To connect to the database
@@ -22,8 +30,16 @@ func main() {
 	// To initialize the Fiber app
 	app := fiber.New()
 
+	// To add CORS middleware
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "http://localhost:3000",
+		AllowMethods:     "GET, POST, PUT, DELETE",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		AllowCredentials: true,
+	}))
+
 	// To pass the session store to middleware
-	middleware.SetSessionStore(store)
+	// middleware.SetSessionStore(store)
 	// To set up routes
 	routers.SetupRoutes(app)
 

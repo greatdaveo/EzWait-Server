@@ -2,43 +2,57 @@ package middleware
 
 import (
 	"ezwait/internal/models"
-	"fmt"
+	"ezwait/internal/utils"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
-var store *session.Store
-
-// To set session store
-func SetSessionStore(s *session.Store) {
-	store = s
-}
-
+// To check if the user is authenticated
 func AuthMiddleware(c *fiber.Ctx) error {
-	// To get the session from the store
-	session, err := store.Get(c)
+	// Get token from Authorization header
+	token := c.Get("Authorization")
+	// To check if the token is provided
+	if token == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"error": "Missing token",
+		})
+	}
+
+	// To extract the token
+	token = strings.Replace(token, "Bearer ", "", -1)
+
+	// To validate JWT
+	claims, err := utils.VerifyToken(token)
 
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
-
-	// To check if the user exists in the session
-	user := session.Get("user")
-	fmt.Println(user)
-
-	if user != nil {
 		return c.Status(401).JSON(fiber.Map{
-			"error": "Unauthorized, please login",
+			"error": "Invalid token",
 		})
 	}
 
-	// To pass the user and role to locals (req) for further use
+	// To extract user and role from claims
+	user, ok := (*claims)["user"].(float64)
+
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user data - user id not found",
+		})
+	}
+
+	role, ok := (*claims)["role"].(string)
+
+	if !ok {
+		// role = ""
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid user data - role not found",
+		})
+	}
+
+	// To add claims to locals for use in handlers
 	c.Locals("user", user)
-	c.Locals("role", session.Get("role"))
+
+	c.Locals("role", role)
 
 	return c.Next()
 }

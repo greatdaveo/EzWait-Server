@@ -7,7 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// var store = session.New()
+
 func SetupRoutes(app *fiber.App) {
+
 	api := app.Group("/api/v1")
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -19,10 +22,22 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/user/login", handlers.LoginHandler)
 	api.Post("/user/logout", handlers.LogoutHandler)
 
+	// To test session
+	app.Get("/test-session", func(c *fiber.Ctx) error {
+
+		user := c.Locals("user")
+		role := c.Locals("role")
+
+		return c.JSON(fiber.Map{
+			"user": user,
+			"role": role,
+		})
+	})
+
 	// For Bookings
 	api.Post("/customer/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.MakeBooking)
-	api.Put("/bookings/:id", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
-	api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.ViewALlBookings)
-	app.Patch("/bookings/:id/status", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateBookingStatus)
-	app.Patch("/stylists/:id/customers", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateCurrentCustomers)
+	api.Put("/bookings/:bookingsId", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
+	api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.ViewAllBookings)
+	api.Patch("/bookings/:bookingsId/status", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateBookingStatus)
+	api.Patch("/stylists/:id/customers", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateCurrentCustomers)
 }
