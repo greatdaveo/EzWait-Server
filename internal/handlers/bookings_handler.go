@@ -184,37 +184,39 @@ func UpdateBookingStatus(c *fiber.Ctx) error {
 	})
 }
 
-func UpdateCurrentCustomers(c *fiber.Ctx) error {
-	stylistID := c.Params("id")
-	var input struct {
-		Action string `json:"action"`
-	}
+// func UpdateCurrentCustomers(c *fiber.Ctx) error {
+// 	var stylist models.Stylist
 
-	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+// 	stylistID := c.Params("id")
+// 	var input struct {
+// 		Action string `json:"action"`
+// 	}
 
-	query := ""
-	if input.Action == "increment" {
-		query = "UPDATE stylists SET no_of_current_customers = no_of_current_customers + 1 WHERE id=$1"
-	} else if input.Action == "decrement" {
-		query = "UPDATE stylists SET no_of_current_customers = GREATEST(no_of_current_customers - 1, 0) WHERE id=$1"
-	} else {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Invalid action",
-		})
-	}
+// 	if err := c.BodyParser(&input); err != nil {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"error": err.Error(),
+// 		})
+// 	}
 
-	_, err := config.DB.Exec(c.Context(), query, stylistID)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{
-			"error": err.Error(),
-		})
-	}
+// 	query := ""
+// 	if input.Action == "increment" {
+// 		query = "UPDATE stylists SET no_of_current_customers = no_of_current_customers + 1 WHERE id=$1"
+// 	} else if input.Action == "decrement" {
+// 		query = "UPDATE stylists SET no_of_current_customers = GREATEST(no_of_current_customers - 1, 0) WHERE id=$1"
+// 	} else {
+// 		return c.Status(400).JSON(fiber.Map{
+// 			"error": "Invalid action",
+// 		})
+// 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"message": "Current customers updated successfully",
-	})
-}
+// 	_, err := config.DB.Exec(c.Context(), query, stylistID)
+// 	if err != nil {
+// 		return c.Status(500).JSON(fiber.Map{
+// 			"error": err.Error(),
+// 		})
+// 	}
+
+// 	return c.Status(200).JSON(fiber.Map{
+// 		"message": "Current customers updated successfully",
+// 	})
+// }
