@@ -283,3 +283,49 @@ func EditStylistProfile(c *fiber.Ctx) error {
 		"data":    stylist,
 	})
 }
+
+func ViewAllStylists(c *fiber.Ctx) error {
+	var stylists []struct {
+		ID       string  `json:"id"`
+		Name     string  `json:"name"`
+		Services string  `json:"services"`
+		Rating   float64 `json:"ratings"`
+	}
+
+	query := `
+	SELECT s.stylist_id AS id, u.name, s.services, s.ratings
+	FROM stylists s
+	JOIN users u ON u.id = s.stylist_id
+	`
+
+	rows, err := config.DB.Query(c.Context(), query)
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to fetch stylists: " + err.Error(),
+		})
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var stylist struct {
+			ID       string  `json:"id"`
+			Name     string  `json:"name"`
+			Services string  `json:"services"`
+			Rating   float64 `json:"ratings"`
+		}
+
+		if err := rows.Scan(&stylist.ID, &stylist.Name, &stylist.Services, &stylist.Rating); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"error": "Error reading stylist data: " + err.Error(),
+			})
+		}
+
+		stylists = append(stylists, stylist)
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"data": stylists,
+	})
+}

@@ -4,6 +4,7 @@ import (
 	"ezwait/config"
 	"ezwait/internal/models"
 	"ezwait/internal/utils"
+	"fmt"
 	"log"
 	"time"
 
@@ -70,6 +71,7 @@ func RegisterHandler(c *fiber.Ctx) error {
 	}
 
 	responseUser := CreateResponseUser(user)
+	// fmt.Println("Registered user: ", responseUser)
 
 	return c.Status(201).JSON(fiber.Map{"message": "User created successfully", "data": responseUser})
 
@@ -116,6 +118,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	}
 
 	responseUser := CreateResponseUser(user)
+	fmt.Println("Login user: ", responseUser)
 
 	// Response
 	return c.Status(200).JSON(fiber.Map{

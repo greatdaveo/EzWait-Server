@@ -8,19 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/gofiber/fiber/v2/middleware/session"
 )
-
-// To initialize session store
-var store = session.New(session.Config{
-	KeyLookup:      "cookie:session_id",
-	CookieSecure:   false,
-	CookieHTTPOnly: true,
-	// source:         "cookie",
-	// sessionName:    "session_id",
-
-	// Expiration:     24 * time.Hour,
-})
 
 func main() {
 	// To connect to the database
@@ -39,7 +27,6 @@ func main() {
 	}))
 
 	// To pass the session store to middleware
-	// middleware.SetSessionStore(store)
 	// To set up routes
 	routers.SetupRoutes(app)
 
