@@ -42,7 +42,7 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 	err = config.DB.QueryRow(
 		c.Context(),
 		`SELECT COUNT(*) FROM bookings
-		 WHERE stylist_id=$1 AND booking_status NOT IN ("completed", "cancelled")`,
+		 WHERE stylist_id=$1 AND booking_status NOT IN ('completed', 'cancelled')`,
 		stylistID,
 	).Scan(&noOfCustomerBookings)
 
@@ -221,7 +221,7 @@ func UpdateStylistProfile(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"error": "Stylist profile updated successfully",
+		"message": "Stylist profile updated successfully",
 	})
 }
 
