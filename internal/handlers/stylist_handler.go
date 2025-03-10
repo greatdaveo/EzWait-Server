@@ -4,64 +4,73 @@ import (
 	"encoding/json"
 	"ezwait/config"
 	"ezwait/internal/models"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func CreateStylistProfile(c *fiber.Ctx) error {
-	// Get the stylist ID from middleware
-	stylistID, ok := c.Locals("user").(float64)
+
+	stylistIDFloat, ok := c.Locals("user").(float64)
 	if !ok {
-		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized"})
+		return c.Status(500).JSON(fiber.Map{"error": "Invalid user ID format"})
 	}
+	stylistID := uint(stylistIDFloat)
 
-	// Check if stylist profile already exists
-	var exists bool
-	err := config.DB.QueryRow(
-		c.Context(),
-		"SELECT EXISTS (SELECT 1 FROM stylists WHERE stylist_id=$1)", stylistID,
-	).Scan(&exists)
-
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to check stylist profile"})
-	}
-
-	if exists {
+	var existingStylist models.Stylist
+	if err := config.DB.Where("stylist_id = ?", stylistID).First(&existingStylist).Error; err == nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Stylist profile already exists"})
 	}
 
-	// Parse request body
+	// To extract data from the JSON req
 	var input struct {
 		ProfilePicture     string           `json:"profile_picture"`
-		Services           []models.Service `json:"services"` // Use []models.Service here
+		Services           []models.Service `json:"services"`
 		SampleOfServiceImg []string         `json:"sample_of_service_img"`
 		AvailableTimeSlots []string         `json:"available_time_slots"`
 	}
-
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid input: " + err.Error()})
 	}
 
-	// Convert data to JSONB
-	serviceData, _ := json.Marshal(input.Services)
-	imageData, _ := json.Marshal(input.SampleOfServiceImg)
-	timeSlotData, _ := json.Marshal(input.AvailableTimeSlots)
-
-	// Insert into PostgreSQL
-	_, err = config.DB.Exec(
-		c.Context(),
-		`INSERT INTO stylists 
-		(stylist_id, active_status, profile_picture, ratings, services, service_img, available_time_slots, no_of_customer_bookings, no_of_current_customers, created_at) 
-		VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8, $9, NOW())`,
-		stylistID, true, input.ProfilePicture, 0.0, serviceData, imageData, timeSlotData, 0, 0,
-	)
-
+	// To Convert slices to JSON
+	servicesJSON, err := json.Marshal(input.Services)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to create stylist profile: " + err.Error()})
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to encode services"})
 	}
 
-	// Return success
+	imagesJSON, err := json.Marshal(input.SampleOfServiceImg)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to encode images"})
+	}
+
+	timeSlotsJSON, err := json.Marshal(input.AvailableTimeSlots)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to encode time slots"})
+	}
+
+	// To create Stylist Profile
+	stylist := models.Stylist{
+		StylistID:            stylistID,
+		ActiveStatus:         true,
+		ProfilePicture:       input.ProfilePicture,
+		Ratings:              0.0,
+		Services:             servicesJSON,
+		SampleOfServiceImg:   imagesJSON,
+		AvailableTimeSlots:   timeSlotsJSON,
+		NoOfCustomerBookings: 0,
+		NoOfCurrentCustomers: 0,
+		CreatedAt:            time.Now(),
+	}
+
+	// To save to database
+	if err := config.DB.Create(&stylist).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to create stylist profile: " + err.Error()})
+	}
+	// Success Response
 	return c.Status(201).JSON(fiber.Map{
 		"message": "Stylist profile created successfully",
+		"data":    stylist,
 	})
 }
+

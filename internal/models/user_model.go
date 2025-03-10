@@ -1,20 +1,22 @@
 package models
 
-import "time"
+import (
+	"gorm.io/gorm"
+)
 
 const (
 	RoleStylist  = "stylist"
 	RoleCustomer = "customer"
 )
 
+// User model
 type User struct {
-	ID              uint      `json:"id"`
-	Name            string    `json:"name"`
-	Email           string    `json:"email"`
-	Number          string    `json:"number"`
-	Role            string    `json:"role"`
-	Password        string    `json:"password"`
-	ConfirmPassword string    `json:"confirm_password"`
-	Location        string    `json:"location"`
-	CreatedAt       time.Time `json:"created_at"`
+	gorm.Model
+	Name            string `json:"name"`
+	Email           string `json:"email" gorm:"uniqueIndex"`
+	Number          string `json:"number"`
+	Role            string `json:"role"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirm_password" gorm:"-"`
+	Location        string `json:"location"`
 }
