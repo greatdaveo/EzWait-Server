@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+
 	// To connect to the database
 	config.ConnectDB()
 	defer config.DB.Close()

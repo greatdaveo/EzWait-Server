@@ -20,11 +20,11 @@ func ConnectDB() {
 	}
 
 	// Connection string
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s?sslmode=require",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
+		// os.Getenv("DB_PORT"),
 		os.Getenv("DB_NAME"))
 
 	// To connect to PostgreSQL

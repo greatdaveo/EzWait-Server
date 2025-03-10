@@ -6,6 +6,7 @@ import (
 	"ezwait/internal/utils"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -35,7 +36,20 @@ func RegisterHandler(c *fiber.Ctx) error {
 	// To Parse the req body into a User struct
 	var user models.User
 	if err := c.BodyParser(&user); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid input - " + err.Error()})
+	}
+
+	user.Email = strings.ToLower(user.Email)
+
+	var existingUserID uint
+	err := config.DB.QueryRow(
+		c.Context(),
+		"SELECT id FROM users WHERE email=$1",
+		user.Email,
+	).Scan(&existingUserID)
+
+	if err == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Email already registered. Please log in."})
 	}
 
 	// To validate the user roles
