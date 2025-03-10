@@ -1,14 +1,25 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
+
+type Service struct {
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
 
 type Stylist struct {
-	ID                   uint      `json:"id"`
-	StylistID            uint      `json:"stylist_id"`
-	Ratings              float64   `json:"ratings"`
-	Services             string    `json:"services"`
-	Availability         string    `json:"availability"`
-	NoOfCustomerBookings int       `json:"no_of_customer_bookings"`
-	NoOfCurrentCustomers int       `json:"no_of_current_customers"`
-	CreatedAt            time.Time `json:"created_at"`
+	ID                   uint            `gorm:"primaryKey" json:"id"`
+	StylistID            uint            `gorm:"uniqueIndex" json:"stylist_id"`
+	ActiveStatus         bool            `json:"active_status"`
+	ProfilePicture       string          `json:"profile_picture"`
+	Ratings              float64         `json:"ratings"`
+	Services             json.RawMessage `json:"services" gorm:"type:jsonb"`
+	SampleOfServiceImg   json.RawMessage `json:"sample_of_service_img" gorm:"type:jsonb"`
+	AvailableTimeSlots   json.RawMessage `json:"available_time_slots" gorm:"type:jsonb"`
+	NoOfCustomerBookings int             `json:"no_of_customer_bookings"`
+	NoOfCurrentCustomers int             `json:"no_of_current_customers"`
+	CreatedAt            time.Time       `json:"created_at"`
 }

@@ -11,14 +11,15 @@ import (
 )
 
 func main() {
-	// To connect to the database
+	// Connect to DB
 	config.ConnectDB()
-	defer config.DB.Close()
+	// defer db.Config.Close()
 
-	// To initialize the Fiber app
+	// config.RunMigrations()
+
+	// Fiber app
 	app := fiber.New()
 
-	// To add CORS middleware
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:3000",
 		AllowMethods:     "GET, POST, PUT, DELETE",
@@ -26,11 +27,10 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// To pass the session store to middleware
-	// To set up routes
+	// To set up route
 	routers.SetupRoutes(app)
 
-	// To start the server
+	// Start the server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "3000"
