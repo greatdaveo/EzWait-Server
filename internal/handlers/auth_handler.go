@@ -44,10 +44,22 @@ func RegisterHandler(c *fiber.Ctx) error {
 
 	// To save user
 	if err := config.DB.Create(&user).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "Failed to register user"})
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to register user",
+		})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"message": "User created successfully", "data": user})
+	return c.Status(201).JSON(fiber.Map{
+		"message": "User created successfully",
+		"data": fiber.Map{
+			"id":       user.ID,
+			"name":     user.Name,
+			"email":    user.Email,
+			"number":   user.Number,
+			"role":     user.Role,
+			"location": user.Location,
+		},
+	})
 }
 
 func LoginHandler(c *fiber.Ctx) error {

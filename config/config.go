@@ -45,7 +45,7 @@ func ConnectDB() {
 }
 
 func RunMigrations() {
-	err := DB.AutoMigrate(&models.User{}, &models.Stylist{})
+	err := DB.AutoMigrate(&models.User{}, &models.Stylist{}, &models.Booking{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
