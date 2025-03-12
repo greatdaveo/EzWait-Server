@@ -2,9 +2,11 @@ package main
 
 import (
 	"ezwait/config"
+	"ezwait/internal/handlers"
 	"ezwait/internal/routers"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -13,9 +15,16 @@ import (
 func main() {
 	// Connect to DB
 	config.ConnectDB()
-	// defer db.Config.Close()
 
 	// config.RunMigrations()
+
+	// To call mark completed bookings every minute
+	go func() {
+		for {
+			handlers.MarkCompletedBookings()
+			time.Sleep(1 * time.Hour)
+		}
+	}()
 
 	// Fiber app
 	app := fiber.New()

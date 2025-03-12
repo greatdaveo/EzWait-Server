@@ -1,0 +1,1 @@
+ALTER TABLE stylists ADD COLUMN auto_confirm BOOLEAN DEFAULT FALSE;
