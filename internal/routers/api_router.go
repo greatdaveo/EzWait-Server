@@ -33,17 +33,20 @@ func SetupRoutes(app *fiber.App) {
 	})
 
 	// For User Bookings
-	// api.Post("/customer/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.MakeBooking)
-	// api.Put("/customer/edit/bookings/:bookingsId", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
-	// api.Get("/customer/view/all-stylists/", middleware.AuthMiddleware, handlers.ViewAllStylists)
+	api.Post("/customer/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.MakeBooking)
+	api.Get("/view-all/bookings", middleware.AuthMiddleware, handlers.ViewAllBookings)
+
+	api.Put("/customer/edit/bookings/:bookingId", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
+	api.Get("/customer/view/all-stylists/", middleware.AuthMiddleware, handlers.ViewAllStylists)
 
 	// api.Patch("/stylists/:id/customers", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateCurrentCustomers)
 
 	// Stylist Bookings Profile
 	// api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.ViewAllBookings)
-	// api.Patch("/bookings/:bookingsId/status", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateBookingStatus)
+	api.Patch("/bookings/:bookingId/status", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateBookingStatus)
 
+	// Stylist
 	api.Post("/stylists/profile", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.CreateStylistProfile)
-	// api.Get("/stylists/:stylistId/profile", middleware.AuthMiddleware, handlers.ViewStylistProfile)
-	// api.Patch("/stylists/:stylistId", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateStylistProfile)
+	api.Get("/stylists/:stylistId/profile", middleware.AuthMiddleware, handlers.ViewStylistProfile)
+	api.Patch("/stylists/:stylistId", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateStylistProfile)
 }

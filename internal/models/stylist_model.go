@@ -21,5 +21,6 @@ type Stylist struct {
 	AvailableTimeSlots   json.RawMessage `json:"available_time_slots" gorm:"type:jsonb"`
 	NoOfCustomerBookings int             `json:"no_of_customer_bookings"`
 	NoOfCurrentCustomers int             `json:"no_of_current_customers"`
+	AutoConfirm          bool            `json:"auto_confirm" gorm:"default:false"`
 	CreatedAt            time.Time       `json:"created_at"`
 }
