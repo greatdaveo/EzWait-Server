@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"ezwait/config"
 	"ezwait/internal/models"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -259,3 +261,56 @@ func EditStylistProfile(c *fiber.Ctx) error {
 	})
 }
 
+func ViewAllStylists(c *fiber.Ctx) error {
+	// To extract optional query params
+	serviceFilter := c.Query("service")
+	sortBy := c.Query("sort")
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("page", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit < 50 {
+		limit = 10
+	}
+
+	// To query the stylist table
+	query := config.DB.Model(&models.Stylist{})
+
+	if serviceFilter != "" {
+		query = query.Where("services @> ?", fmt.Sprintf(`"%s"`, serviceFilter))
+	}
+
+	if sortBy == "ratings" {
+		query = query.Order("ratings DESC")
+	} else if sortBy == "name" {
+		query = query.Order("name ASC")
+	}
+
+	offset := (page - 1) * limit
+	query = query.Offset(offset).Limit(limit)
+
+	// To fetch the queries from DB
+	var stylists []models.Stylist
+	if err := query.Find(&stylists).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to fetch stylist: " + err.Error(),
+		})
+	}
+
+	// To convert JSONB response to Go struct
+	for i := range stylists {
+		_ = json.Unmarshal(stylists[i].Services, &stylists[i].Services)
+		_ = json.Unmarshal(stylists[i].AvailableTimeSlots, &stylists[i].AvailableTimeSlots)
+		_ = json.Unmarshal(stylists[i].SampleOfServiceImg, &stylists[i].SampleOfServiceImg)
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Stylists retrieved successfully",
+		"data":    stylists,
+		"page":    page,
+		"limit":   limit,
+	})
+
+}
