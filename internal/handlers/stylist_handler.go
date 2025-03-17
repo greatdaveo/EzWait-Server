@@ -26,6 +26,7 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 
 	// To extract data from the JSON req
 	var input struct {
+		StylistID          uint             `json:"stylist_id"`
 		ProfilePicture     string           `json:"profile_picture"`
 		Services           []models.Service `json:"services"`
 		SampleOfServiceImg []string         `json:"sample_of_service_img"`
@@ -69,6 +70,11 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 	if err := config.DB.Create(&stylist).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to create stylist profile: " + err.Error()})
 	}
+	// To fetch the stylist details and the Stylist user data
+	if err := config.DB.Preload("User").Where("stylist_id = ?", stylistID).First(&stylist).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch stylist profile: " + err.Error()})
+	}
+
 	// Success Response
 	return c.Status(201).JSON(fiber.Map{
 		"message": "Stylist profile created successfully",
@@ -268,6 +274,7 @@ func ViewAllStylists(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("page", "10"))
 
+	// For valid pagination values
 	if page < 1 {
 		page = 1
 	}
@@ -299,16 +306,48 @@ func ViewAllStylists(c *fiber.Ctx) error {
 		})
 	}
 
-	// To convert JSONB response to Go struct
-	for i := range stylists {
-		_ = json.Unmarshal(stylists[i].Services, &stylists[i].Services)
-		_ = json.Unmarshal(stylists[i].AvailableTimeSlots, &stylists[i].AvailableTimeSlots)
-		_ = json.Unmarshal(stylists[i].SampleOfServiceImg, &stylists[i].SampleOfServiceImg)
+	// To prepare response with additional user details
+	var stylistResponse []map[string]interface{}
+
+	for _, stylist := range stylists {
+		var user models.User
+
+		// To fetch the stylists name & location
+		if err := config.DB.Where("id = ?", stylist.StylistID).First(&user).Error; err != nil {
+			fmt.Println("Error fetching user details: ", err)
+			continue
+		}
+
+		// To convert JSONB response to Go struct
+		var services []models.Service
+		var sampleImgs []string
+		var timeSlots []string
+
+		_ = json.Unmarshal(stylist.Services, &services)
+		_ = json.Unmarshal(stylist.SampleOfServiceImg, &sampleImgs)
+		_ = json.Unmarshal(stylist.AvailableTimeSlots, &timeSlots)
+
+		// To append stylist info to response array
+		stylistResponse = append(stylistResponse, map[string]interface{}{
+			"id":                      stylist.ID,
+			"stylist_id":              stylist.StylistID,
+			"name":                    user.Name,
+			"location":                user.Location,
+			"active_status":           stylist.ActiveStatus,
+			"profile_picture":         stylist.ProfilePicture,
+			"ratings":                 stylist.Ratings,
+			"services":                services,
+			"sample_of_service_img":   sampleImgs,
+			"available_time_slots":    timeSlots,
+			"no_of_customer_bookings": stylist.NoOfCustomerBookings,
+			"auto_confirm":            stylist.AutoConfirm,
+			"created_at":              stylist.CreatedAt,
+		})
 	}
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Stylists retrieved successfully",
-		"data":    stylists,
+		"data":    stylistResponse,
 		"page":    page,
 		"limit":   limit,
 	})

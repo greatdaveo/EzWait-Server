@@ -2,11 +2,9 @@ package main
 
 import (
 	"ezwait/config"
-	"ezwait/internal/handlers"
 	"ezwait/internal/routers"
 	"log"
 	"os"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -17,14 +15,15 @@ func main() {
 	config.ConnectDB()
 
 	// config.RunMigrations()
+	// config.DB.Exec("ALTER TABLE stylists DROP CONSTRAINT IF EXISTS fk_bookings_stylist;")
 
 	// To call mark completed bookings every minute
-	go func() {
-		for {
-			handlers.MarkCompletedBookings()
-			time.Sleep(1 * time.Hour)
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		handlers.MarkCompletedBookings()
+	// 		time.Sleep(1 * time.Hour)
+	// 	}
+	// }()
 
 	// Fiber app
 	app := fiber.New()
