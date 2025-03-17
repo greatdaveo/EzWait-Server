@@ -70,6 +70,7 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 	if err := config.DB.Create(&stylist).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to create stylist profile: " + err.Error()})
 	}
+
 	// To fetch the stylist details and the Stylist user data
 	if err := config.DB.Preload("User").Where("stylist_id = ?", stylistID).First(&stylist).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch stylist profile: " + err.Error()})
@@ -90,6 +91,12 @@ func ViewStylistProfile(c *fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Stylist not found",
 		})
+	}
+
+	// To fetch the associated user details of the stylist
+	var user models.User
+	if err := config.DB.Where("id = ?", stylist.StylistID).First(&user).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to fetch stylist profile: " + err.Error()})
 	}
 
 	// To convert JSONB (Byte array) in PostgreSQL DB to Go structs
@@ -128,6 +135,14 @@ func ViewStylistProfile(c *fiber.Ctx) error {
 			"no_of_customer_bookings": stylist.NoOfCustomerBookings,
 			"no_of_current_customers": stylist.NoOfCurrentCustomers,
 			"created_at":              stylist.CreatedAt,
+		},
+		"user": fiber.Map{
+			"id":       user.ID,
+			"name":     user.Name,
+			"email":    user.Email,
+			"number":   user.Number,
+			"role":     user.Role,
+			"location": user.Location,
 		},
 	})
 }
