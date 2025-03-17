@@ -13,6 +13,7 @@ type Service struct {
 type Stylist struct {
 	ID                   uint            `gorm:"primaryKey" json:"id"`
 	StylistID            uint            `gorm:"uniqueIndex" json:"stylist_id"`
+	User                 User            `gorm:"foreignKey:StylistID;references:ID;constraint:OnDelete:CASCADE;" json:"user"`
 	ActiveStatus         bool            `json:"active_status"`
 	ProfilePicture       string          `json:"profile_picture"`
 	Ratings              float64         `json:"ratings"`
