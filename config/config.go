@@ -1,7 +1,6 @@
 package config
 
 import (
-	"ezwait/internal/models"
 	"fmt"
 	"log"
 	"os"
@@ -34,7 +33,8 @@ func ConnectDB() {
 	// var err error
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		PrepareStmt: false,
+		Logger:      logger.Default.LogMode(logger.Info),
 	})
 
 	if err != nil {
@@ -51,15 +51,15 @@ func RunMigrations() {
 	// 	&models.Booking{},
 	// )
 
-	err := DB.AutoMigrate(
-		&models.User{},
-		&models.Stylist{},
-		&models.Booking{},
-	)
+	// err := DB.AutoMigrate(
+	// 	&models.User{},
+	// 	&models.Stylist{},
+	// 	&models.Booking{},
+	// )
 
-	if err != nil {
-		log.Fatal("Failed to migrate database:", err)
-	}
+	// if err != nil {
+	// 	log.Fatal("Failed to migrate database:", err)
+	// }
 
 	fmt.Println("Migrations completed successfully")
 }
