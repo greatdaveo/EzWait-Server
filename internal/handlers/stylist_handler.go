@@ -26,11 +26,11 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 
 	// To extract data from the JSON req
 	var input struct {
-		StylistID          uint             `json:"stylist_id"`
-		ProfilePicture     string           `json:"profile_picture"`
-		Services           []models.Service `json:"services"`
-		SampleOfServiceImg []string         `json:"sample_of_service_img"`
-		AvailableTimeSlots []string         `json:"available_time_slots"`
+		StylistID          uint                     `json:"stylist_id"`
+		ProfilePicture     string                   `json:"profile_picture"`
+		Services           []models.Service         `json:"services"`
+		SampleOfServices   []models.SampleOfService `json:"sample_of_services"`
+		AvailableTimeSlots []string                 `json:"available_time_slots"`
 	}
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid input: " + err.Error()})
@@ -42,7 +42,7 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to encode services"})
 	}
 
-	imagesJSON, err := json.Marshal(input.SampleOfServiceImg)
+	sampleServicesJSON, err := json.Marshal(input.SampleOfServices)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to encode images"})
 	}
@@ -59,7 +59,7 @@ func CreateStylistProfile(c *fiber.Ctx) error {
 		ProfilePicture:       input.ProfilePicture,
 		Ratings:              0.0,
 		Services:             servicesJSON,
-		SampleOfServiceImg:   imagesJSON,
+		SampleOfServices:     sampleServicesJSON,
 		AvailableTimeSlots:   timeSlotsJSON,
 		NoOfCustomerBookings: 0,
 		NoOfCurrentCustomers: 0,
@@ -107,8 +107,8 @@ func ViewStylistProfile(c *fiber.Ctx) error {
 		})
 	}
 
-	var serviceImages []string
-	if err := json.Unmarshal(stylist.SampleOfServiceImg, &serviceImages); err != nil {
+	var sampleServices []models.SampleOfService
+	if err := json.Unmarshal(stylist.SampleOfServices, &sampleServices); err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to parse servicesImages",
 		})
@@ -130,7 +130,7 @@ func ViewStylistProfile(c *fiber.Ctx) error {
 			"profile_picture":         stylist.ProfilePicture,
 			"ratings":                 stylist.Ratings,
 			"services":                services,
-			"sample_of_service_img":   serviceImages,
+			"sample_of_services":      sampleServices,
 			"available_time_slots":    timeSlots,
 			"no_of_customer_bookings": stylist.NoOfCustomerBookings,
 			"no_of_current_customers": stylist.NoOfCurrentCustomers,
@@ -156,12 +156,12 @@ func UpdateStylistProfile(c *fiber.Ctx) error {
 	stylistID := uint(stylistIDFloat)
 
 	var input struct {
-		ProfilePicture       *string           `json:"profile_picture"`
-		Services             *[]models.Service `json:"services"`
-		SampleOfServiceImg   *[]string         `json:"sample_of_service_img"`
-		AvailableTimeSlots   *[]string         `json:"available_time_slots"`
-		ActiveStatus         *bool             `json:"active_status"`
-		NoOfCurrentCustomers *int              `json:"no_of_current_customers"`
+		ProfilePicture       *string                   `json:"profile_picture"`
+		Services             *[]models.Service         `json:"services"`
+		SampleOfServices     *[]models.SampleOfService `json:"sample_of_services"`
+		AvailableTimeSlots   *[]string                 `json:"available_time_slots"`
+		ActiveStatus         *bool                     `json:"active_status"`
+		NoOfCurrentCustomers *int                      `json:"no_of_current_customers"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
@@ -185,9 +185,9 @@ func UpdateStylistProfile(c *fiber.Ctx) error {
 		stylist.Services = servicesJSON
 	}
 
-	if input.SampleOfServiceImg != nil {
-		imagesJSON, _ := json.Marshal(input.SampleOfServiceImg)
-		stylist.SampleOfServiceImg = imagesJSON
+	if input.SampleOfServices != nil {
+		sampleServicesJSON, _ := json.Marshal(input.SampleOfServices)
+		stylist.SampleOfServices = sampleServicesJSON
 	}
 
 	if input.AvailableTimeSlots != nil {
@@ -234,12 +234,12 @@ func EditStylistProfile(c *fiber.Ctx) error {
 	stylistID := uint(stylistIDFloat)
 	// To parse the request body
 	var input struct {
-		ProfilePicture       string           `json:"profile_picture"`
-		Services             []models.Service `json:"services"`
-		SampleOfServiceImg   []string         `json:"sample_of_service_img"`
-		AvailableTimeSlots   []string         `json:"available_time_slots"`
-		ActiveStatus         bool             `json:"active_status"`
-		NoOfCurrentCustomers int              `json:"no_of_current_customers"`
+		ProfilePicture       string                   `json:"profile_picture"`
+		Services             []models.Service         `json:"services"`
+		SampleOfServices     []models.SampleOfService `json:"sample_of_services"`
+		AvailableTimeSlots   []string                 `json:"available_time_slots"`
+		ActiveStatus         bool                     `json:"active_status"`
+		NoOfCurrentCustomers int                      `json:"no_of_current_customers"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
@@ -259,12 +259,12 @@ func EditStylistProfile(c *fiber.Ctx) error {
 	// To convert JSONB fields to JSON
 	servicesJSON, _ := json.Marshal(input.Services)
 	timeSlotsJSON, _ := json.Marshal(input.AvailableTimeSlots)
-	imagesJSON, _ := json.Marshal(input.SampleOfServiceImg)
+	sampleServicesJSON, _ := json.Marshal(input.SampleOfServices)
 
 	// To overwrite all fields
 	stylist.ProfilePicture = input.ProfilePicture
 	stylist.Services = servicesJSON
-	stylist.SampleOfServiceImg = imagesJSON
+	stylist.SampleOfServices = sampleServicesJSON
 	stylist.AvailableTimeSlots = timeSlotsJSON
 	stylist.ActiveStatus = input.ActiveStatus
 	stylist.NoOfCurrentCustomers = input.NoOfCurrentCustomers
@@ -335,11 +335,11 @@ func ViewAllStylists(c *fiber.Ctx) error {
 
 		// To convert JSONB response to Go struct
 		var services []models.Service
-		var sampleImgs []string
+		var sampleImgs []models.SampleOfService
 		var timeSlots []string
 
 		_ = json.Unmarshal(stylist.Services, &services)
-		_ = json.Unmarshal(stylist.SampleOfServiceImg, &sampleImgs)
+		_ = json.Unmarshal(stylist.SampleOfServices, &sampleImgs)
 		_ = json.Unmarshal(stylist.AvailableTimeSlots, &timeSlots)
 
 		// To append stylist info to response array
@@ -352,7 +352,7 @@ func ViewAllStylists(c *fiber.Ctx) error {
 			"profile_picture":         stylist.ProfilePicture,
 			"ratings":                 stylist.Ratings,
 			"services":                services,
-			"sample_of_service_img":   sampleImgs,
+			"sample_of_services":      sampleImgs,
 			"available_time_slots":    timeSlots,
 			"no_of_customer_bookings": stylist.NoOfCustomerBookings,
 			"auto_confirm":            stylist.AutoConfirm,
