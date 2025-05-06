@@ -29,7 +29,7 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",
+		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, PUT, DELETE",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
@@ -39,7 +39,7 @@ func main() {
 	routers.SetupRoutes(app)
 
 	// Start the server
-	port := os.Getenv("APP_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
 	}
