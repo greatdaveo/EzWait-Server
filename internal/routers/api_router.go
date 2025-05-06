@@ -35,11 +35,12 @@ func SetupRoutes(app *fiber.App) {
 	// For User Bookings
 	api.Post("/customer/bookings", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.MakeBooking)
 	api.Get("/view-all/bookings", middleware.AuthMiddleware, handlers.ViewAllBookings)
+	api.Get("/view/bookings/:bookingId", middleware.AuthMiddleware, handlers.ViewSingleBooking)
 
 	api.Put("/customer/edit/bookings/:bookingId", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.EditBooking)
 	api.Get("/customer/view/all-stylists/", middleware.AuthMiddleware, handlers.ViewAllStylists)
 
-	// api.Patch("/stylists/:id/customers", middleware.AuthMiddleware, middleware.ValidateCustomer, handlers.UpdateCurrentCustomers)
+	// api.Patch("/stylists/:id/customers", middleware.AuthMiddleware, handlers.UpdateCurrentCustomers)
 
 	// Stylist Bookings Profile
 	// api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.ViewAllBookings)
