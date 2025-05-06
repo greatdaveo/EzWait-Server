@@ -32,7 +32,7 @@ func main() {
 		AllowOrigins:     "*",
 		AllowMethods:     "GET, POST, PUT, DELETE",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		AllowCredentials: true,
+		AllowCredentials: false,
 	}))
 
 	// To set up route
