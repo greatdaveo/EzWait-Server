@@ -121,7 +121,7 @@ func ViewAllBookings(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	var bookings []models.Booking
-	query := config.DB.Model(&models.Booking{})
+	query := config.DB.Model(&models.Booking{}).Preload("User").Preload("Stylist")
 
 	if role == "customer" {
 		query = query.Where("user_id = ?", userID)
@@ -139,11 +139,72 @@ func ViewAllBookings(c *fiber.Ctx) error {
 		})
 	}
 
+	// Response including user & stylist details
+	var response []fiber.Map
+	for _, b := range bookings {
+		response = append(response, fiber.Map{
+			"id":             b.ID,
+			"start_time":     b.StartTime,
+			"end_time":       b.EndTime,
+			"booking_day":    b.BookingDay,
+			"booking_status": b.BookingStatus,
+			"created_at":     b.CreatedAt,
+			"user": fiber.Map{
+				"id":       b.User.ID,
+				"name":     b.User.Name,
+				"email":    b.User.Email,
+				"number":   b.User.Number,
+				"location": b.User.Location,
+			},
+			"stylist": fiber.Map{
+				"id":              b.Stylist.ID,
+				"stylist_id":      b.Stylist.StylistID,
+				"profile_picture": b.Stylist.ProfilePicture,
+				"ratings":         b.Stylist.Ratings,
+			},
+		})
+	}
+
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Bookings received successfully",
-		"data":    bookings,
+		"data":    response,
 		"page":    page,
 		"limit":   limit,
+	})
+}
+
+func ViewSingleBooking(c *fiber.Ctx) error {
+	bookingID := c.Params("bookingId")
+	var booking models.Booking
+	err := config.DB.Preload("User").Preload("Stylist").Where("id = ?", bookingID).First(&booking).Error
+	if err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "Booking not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "Booking retrieved successfully",
+		"data": fiber.Map{
+			"id": booking.ID,
+			"user": fiber.Map{
+				"id":       booking.User.ID,
+				"name":     booking.User.Name,
+				"email":    booking.User.Email,
+				"number":   booking.User.Number,
+				"location": booking.User.Location,
+			},
+			"stylist": fiber.Map{
+				"id":              booking.Stylist.ID,
+				"profile_picture": booking.Stylist.ProfilePicture,
+				"ratings":         booking.Stylist.Ratings,
+			},
+			"start_time":     booking.StartTime,
+			"end_time":       booking.EndTime,
+			"booking_day":    booking.BookingDay,
+			"booking_status": booking.BookingStatus,
+			"created_at":     booking.CreatedAt,
+		},
 	})
 }
 
@@ -335,4 +396,8 @@ func MarkCompletedBookings() {
 		config.DB.Save(&booking)
 		fmt.Println("Booking marked as completed: ", booking.ID)
 	}
+}
+
+func UpdateCurrentCustomers() {
+	return
 }
