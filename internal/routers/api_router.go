@@ -44,10 +44,10 @@ func SetupRoutes(app *fiber.App) {
 
 	// Stylist Bookings Profile
 	// api.Get("/stylists/:stylistId/bookings", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.ViewAllBookings)
-	api.Patch("/bookings/:bookingId/status", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateBookingStatus)
-
+	
 	// Stylist
 	api.Post("/stylists/profile", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.CreateStylistProfile)
 	api.Get("/stylists/:stylistId/profile", middleware.AuthMiddleware, handlers.ViewStylistProfile)
+	api.Patch("/bookings/:bookingId/status", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateBookingStatus)
 	api.Patch("/stylists/:stylistId", middleware.AuthMiddleware, middleware.ValidateStylist, handlers.UpdateStylistProfile)
 }
