@@ -52,12 +52,13 @@ func RegisterHandler(c *fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{
 		"message": "User created successfully",
 		"data": fiber.Map{
-			"id":       user.ID,
-			"name":     user.Name,
-			"email":    user.Email,
-			"number":   user.Number,
-			"role":     user.Role,
-			"location": user.Location,
+			"id":              user.ID,
+			"name":            user.Name,
+			"email":           user.Email,
+			"number":          user.Number,
+			"role":            user.Role,
+			"location":        user.Location,
+			"profile_picture": user.ProfilePicture,
 		},
 	})
 }
@@ -103,12 +104,13 @@ func LoginHandler(c *fiber.Ctx) error {
 		"message": "Login successful",
 		"token":   token,
 		"data": fiber.Map{
-			"id":       user.ID,
-			"name":     user.Name,
-			"email":    user.Email,
-			"number":   user.Number,
-			"role":     user.Role,
-			"location": user.Location,
+			"id":              user.ID,
+			"name":            user.Name,
+			"email":           user.Email,
+			"number":          user.Number,
+			"role":            user.Role,
+			"location":        user.Location,
+			"profile_picture": user.ProfilePicture,
 		},
 	})
 }
