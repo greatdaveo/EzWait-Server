@@ -81,7 +81,7 @@ func LoginHandler(c *fiber.Ctx) error {
 	var user models.User
 	err := config.DB.Where("email = ?", loginReq.Email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
+		return c.Status(401).JSON(fiber.Map{"error": "Invalid Credentials"})
 	}
 
 	if err != nil {
@@ -90,7 +90,7 @@ func LoginHandler(c *fiber.Ctx) error {
 
 	// To compare hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginReq.Password)); err != nil {
-		return c.Status(401).JSON(fiber.Map{"error": "Invalid email or password"})
+		return c.Status(401).JSON(fiber.Map{"error": "Invalid Credentials"})
 	}
 
 	// To generate JWT token
@@ -132,5 +132,65 @@ func LogoutHandler(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Successfully logged out",
+	})
+}
+
+func ChangePassword(c *fiber.Ctx) error {
+	userIDFloat, ok := c.Locals("user").(float64)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{
+			"error": "Unauthorized user",
+		})
+	}
+
+	userID := uint(userIDFloat)
+
+	var input struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+		ConfirmPassword string `json:"confirm_password"`
+	}
+
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid input: " + err.Error(),
+		})
+	}
+
+	if input.NewPassword != input.ConfirmPassword {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "New passwords do not match",
+		})
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.CurrentPassword)); err != nil {
+		return c.Status(401).JSON(fiber.Map{
+			"error": "Current password is incorrect",
+		})
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to hash new password",
+		})
+	}
+
+	user.Password = string(hashedPassword)
+	if err := config.DB.Save(&user).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to update password",
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Password updated successfully",
 	})
 }
