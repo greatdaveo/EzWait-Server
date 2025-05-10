@@ -194,3 +194,25 @@ func ChangePassword(c *fiber.Ctx) error {
 		"message": "Password updated successfully",
 	})
 }
+
+func DeleteAccount(c *fiber.Ctx) error {
+	userIDFloat, ok := c.Locals("user").(float64)
+	if !ok {
+		return c.Status(401).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+	userID := uint(userIDFloat)
+
+	var user models.User
+
+	if err := config.DB.Delete(&user, userID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"error": "Failed to delete account: " + err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Your account has been deleted successfully",
+	})
+}
