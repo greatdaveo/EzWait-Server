@@ -19,6 +19,8 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/user/register", middleware.ValidateUser, handlers.RegisterHandler)
 	api.Post("/user/login", handlers.LoginHandler)
 	api.Post("/user/logout", handlers.LogoutHandler)
+	api.Put("/user/change-password", middleware.AuthMiddleware, handlers.ChangePassword)
+	api.Delete("/user/delete-account", middleware.AuthMiddleware, handlers.DeleteAccount)
 
 	// To test session
 	app.Get("/test-session", func(c *fiber.Ctx) error {
