@@ -27,7 +27,7 @@ func ConnectDB() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 		os.Getenv("DB_PORT"),
-		"require", // 🔹 Change "require" to "disable" if testing locally
+		os.Getenv("SSL_MODE"),
 	)
 
 	// var err error
