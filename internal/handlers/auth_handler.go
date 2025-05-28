@@ -5,6 +5,7 @@ import (
 	"ezwait/config"
 	"ezwait/internal/models"
 	"ezwait/internal/utils"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
@@ -24,7 +25,16 @@ func RegisterHandler(c *fiber.Ctx) error {
 
 	// To check if email exists
 	var existingUser models.User
-	if err := config.DB.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
+
+	db := config.DB
+	if db == nil {
+		log.Println("DB is nill")
+		return c.Status(fiber.StatusInternalServerError).JSON((fiber.Map{
+			"error": "Database connection not initialized",
+		}))
+	}
+
+	if err := db.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Email already registered"})
 	}
 
@@ -79,7 +89,16 @@ func LoginHandler(c *fiber.Ctx) error {
 
 	// To find user by email
 	var user models.User
-	err := config.DB.Where("email = ?", loginReq.Email).First(&user).Error
+
+	db := config.DB
+	if db == nil {
+		log.Println("DB is nill")
+		return c.Status(fiber.StatusInternalServerError).JSON((fiber.Map{
+			"error": "Database connection not initialized",
+		}))
+	}
+
+	err := db.Where("email = ?", loginReq.Email).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid Credentials"})
 	}
