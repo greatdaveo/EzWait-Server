@@ -32,9 +32,8 @@ func ConnectDB() {
 		os.Getenv("SSL_MODE"),
 	)
 
-	// var err error
-
-	_, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		PrepareStmt: false,
 		Logger:      logger.Default.LogMode(logger.Info),
 	})
@@ -43,7 +42,7 @@ func ConnectDB() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	fmt.Println("Connected to the database successfully")
+	fmt.Println("✅ Connected to the database successfully")
 }
 
 func RunMigrations() {
