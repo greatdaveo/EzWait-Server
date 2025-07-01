@@ -121,13 +121,13 @@ func ViewAllBookings(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	var bookings []models.Booking
-	fmt.Println("bookings: -----", bookings)
 
 	query := config.DB.Model(&models.Booking{}).Preload("User").Preload("Stylist").Preload("Stylist.User")
 
-	if role == "customer" {
+	switch role {
+	case "customer":
 		query = query.Where("user_id = ?", userID)
-	} else if role == "stylist" {
+	case "stylist":
 		query = query.Where("stylist_id = ?", userID)
 	}
 
@@ -144,6 +144,7 @@ func ViewAllBookings(c *fiber.Ctx) error {
 	// Response including user & stylist details
 	var response []fiber.Map
 	for _, b := range bookings {
+		fmt.Println(b.Stylist)
 		response = append(response, fiber.Map{
 			"id":             b.ID,
 			"start_time":     b.StartTime,
@@ -170,6 +171,8 @@ func ViewAllBookings(c *fiber.Ctx) error {
 			},
 		})
 	}
+
+	fmt.Println("bookings: -----", response)
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Bookings received successfully",
