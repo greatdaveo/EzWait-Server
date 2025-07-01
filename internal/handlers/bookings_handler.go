@@ -121,7 +121,9 @@ func ViewAllBookings(c *fiber.Ctx) error {
 	offset := (page - 1) * limit
 
 	var bookings []models.Booking
-	query := config.DB.Model(&models.Booking{}).Preload("User").Preload("Stylist")
+	fmt.Println("bookings: -----", bookings)
+
+	query := config.DB.Model(&models.Booking{}).Preload("User").Preload("Stylist").Preload("Stylist.User")
 
 	if role == "customer" {
 		query = query.Where("user_id = ?", userID)
@@ -161,6 +163,10 @@ func ViewAllBookings(c *fiber.Ctx) error {
 				"stylist_id":      b.Stylist.StylistID,
 				"profile_picture": b.Stylist.ProfilePicture,
 				"ratings":         b.Stylist.Ratings,
+				"name":            b.Stylist.User.Name,
+				"email":           b.Stylist.User.Email,
+				"number":          b.Stylist.User.Number,
+				"location":        b.Stylist.User.Location,
 			},
 		})
 	}
