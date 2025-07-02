@@ -122,7 +122,10 @@ func ViewAllBookings(c *fiber.Ctx) error {
 
 	var bookings []models.Booking
 
-	query := config.DB.Model(&models.Booking{}).Preload("User").Preload("Stylist").Preload("Stylist.User")
+	query := config.DB.Model(&models.Booking{}).
+		Preload("User").
+		Preload("Stylist").
+		Preload("Stylist.User")
 
 	switch role {
 	case "customer":
@@ -144,7 +147,12 @@ func ViewAllBookings(c *fiber.Ctx) error {
 	// Response including user & stylist details
 	var response []fiber.Map
 	for _, b := range bookings {
-		fmt.Println(b.Stylist)
+		// var stylistUser models.User
+		// if err := config.DB.
+		// 	Where("id = ?", b.Stylist.StylistID).
+		// 	First(&stylistUser).Error; err != nil {
+		// 	fmt.Println("Error loading stylist user:", err)
+		// }
 		response = append(response, fiber.Map{
 			"id":             b.ID,
 			"start_time":     b.StartTime,
@@ -171,8 +179,6 @@ func ViewAllBookings(c *fiber.Ctx) error {
 			},
 		})
 	}
-
-	fmt.Println("bookings: -----", response)
 
 	return c.Status(200).JSON(fiber.Map{
 		"message": "Bookings received successfully",
@@ -407,6 +413,6 @@ func MarkCompletedBookings() {
 	}
 }
 
-func UpdateCurrentCustomers() {
-	return
-}
+// func UpdateCurrentCustomers() {
+// 	return
+// }
