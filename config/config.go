@@ -12,6 +12,12 @@ import (
 )
 
 var DB *gorm.DB
+var StripeWebhookSecret string
+
+// func InitStripe() {
+// 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
+// 	StripeWebhookSecret = os.Getenv("STRIPE_WEBHOOK_SECRET")
+// }
 
 func ConnectDB() {
 	// To only load .env file in local development

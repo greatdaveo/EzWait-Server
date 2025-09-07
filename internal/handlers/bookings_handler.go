@@ -3,6 +3,7 @@ package handlers
 import (
 	"ezwait/config"
 	"ezwait/internal/models"
+	"ezwait/internal/utils"
 	"fmt"
 	"strconv"
 	"time"
@@ -21,15 +22,42 @@ func MakeBooking(c *fiber.Ctx) error {
 
 	// To parse the booking request body
 	var input struct {
-		StylistID  uint      `json:"stylist_id"`
-		StartTime  time.Time `json:"start_time"`
-		EndTime    time.Time `json:"end_time"`
-		BookingDay string    `json:"booking_day"`
+		StylistID   uint      `json:"stylist_id"`
+		StartTime   time.Time `json:"start_time"`
+		EndTime     time.Time `json:"end_time"`
+		BookingDay  string    `json:"booking_day"`
+		ServiceName string    `json:"service_name"`
+		TotalAmount float64   `json:"total_amount"`
+		Notes       string    `json:"notes"`
 	}
 
 	if err := c.BodyParser(&input); err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Invalid input: " + err.Error(),
+		})
+	}
+
+	// To validate total amount
+	if input.TotalAmount <= 0 {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Total amount must be greater than 0",
+		})
+	}
+
+	// To calculate deposit (50% of total)
+	depositAmount := input.TotalAmount * 0.5
+
+	// To handle the booking day format
+	bookingDay, err := time.Parse("2006-01-02", input.BookingDay)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Invalid date format: " + err.Error(),
+		})
+	}
+	// To validate booking time
+	if valid, message := utils.ValidateBookingTime(input.StartTime, input.EndTime, bookingDay); !valid {
+		return c.Status(400).JSON(fiber.Map{
+			"error": message,
 		})
 	}
 
@@ -55,7 +83,7 @@ func MakeBooking(c *fiber.Ctx) error {
 	}
 
 	// To handle the booking day format
-	bookingDay, err := time.Parse("2006-01-02", input.BookingDay)
+	bookingDay, err = time.Parse("2006-01-02", input.BookingDay)
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"error": "Invalid date format" + err.Error(),
@@ -70,13 +98,19 @@ func MakeBooking(c *fiber.Ctx) error {
 
 	// To create the booking with "pending" status
 	booking := models.Booking{
-		UserID:        customerID,
-		StylistID:     input.StylistID,
-		StartTime:     input.StartTime,
-		EndTime:       input.EndTime,
-		BookingDay:    bookingDay,
-		BookingStatus: bookingStatus,
-		CreatedAt:     time.Now(),
+		UserID:           customerID,
+		StylistID:        input.StylistID,
+		StartTime:        input.StartTime,
+		EndTime:          input.EndTime,
+		BookingDay:       bookingDay,
+		BookingStatus:    bookingStatus,
+		TotalAmount:      &input.TotalAmount,
+		DepositAmount:    &depositAmount,
+		ServiceName:      input.ServiceName,
+		Notes:            input.Notes,
+		DepositPaid:      false,
+		FinalPaymentPaid: false,
+		CreatedAt:        time.Now(),
 	}
 
 	if err := config.DB.Create(&booking).Error; err != nil {
@@ -90,7 +124,11 @@ func MakeBooking(c *fiber.Ctx) error {
 
 	return c.Status(201).JSON(fiber.Map{
 		"message": "Booking created successfully",
-		"data":    booking,
+		"data": fiber.Map{
+			"booking":        booking,
+			"deposit_amount": depositAmount,
+			"final_amount":   input.TotalAmount - depositAmount,
+		},
 	})
 }
 

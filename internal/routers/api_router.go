@@ -11,6 +11,9 @@ func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/api/v1")
 
+	paymentGroup := api.Group("/payments")
+	paymentHandler := handlers.NewPaymentHandler()
+
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Welcome to EzWait App")
 	})
@@ -21,6 +24,11 @@ func SetupRoutes(app *fiber.App) {
 	api.Post("/user/logout", handlers.LogoutHandler)
 	api.Put("/user/change-password", middleware.AuthMiddleware, handlers.ChangePassword)
 	api.Delete("/user/delete-account", middleware.AuthMiddleware, handlers.DeleteAccount)
+
+	paymentGroup.Post("/deposit", middleware.AuthMiddleware, paymentHandler.CreateDepositPayment)
+	paymentGroup.Post("/final", middleware.AuthMiddleware, paymentHandler.CreateFinalPayment)
+	paymentGroup.Post("/webhook", paymentHandler.StripeWebhook)
+	paymentGroup.Post("/history", middleware.AuthMiddleware, paymentHandler.GetPaymentHistory)
 
 	// To test session
 	app.Get("/test-session", func(c *fiber.Ctx) error {
